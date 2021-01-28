@@ -92,7 +92,8 @@ func (p *Proxy) Connect(ctx context.Context, state request.Request, opts options
 	}
 
 	// Set buffer size correctly for this client.
-	pc.c.UDPSize = uint16(state.Size())
+	//pc.c.UDPSize = uint16(state.Size())
+	pc.c.UDPSize = uint16(8192)
 	if pc.c.UDPSize < 512 {
 		pc.c.UDPSize = 512
 	}
