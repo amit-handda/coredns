@@ -6,6 +6,7 @@ package forward
 
 import (
 	"context"
+	"github.com/coredns/coredns/plugin/debug"
 	"io"
 	"strconv"
 	"sync/atomic"
@@ -92,8 +93,7 @@ func (p *Proxy) Connect(ctx context.Context, state request.Request, opts options
 	}
 
 	// Set buffer size correctly for this client.
-	//pc.c.UDPSize = uint16(state.Size())
-	pc.c.UDPSize = uint16(8192)
+	pc.c.UDPSize = uint16(state.Size())
 	if pc.c.UDPSize < 512 {
 		pc.c.UDPSize = 512
 	}
@@ -110,7 +110,11 @@ func (p *Proxy) Connect(ctx context.Context, state request.Request, opts options
 	var ret *dns.Msg
 	pc.c.SetReadDeadline(time.Now().Add(readTimeout))
 	for {
-		ret, err = pc.c.ReadMsg()
+		data,err := pc.c.ReadMsgHeader(nil)
+		log.Debug("DATTTTTT")
+		log.Debug(string(debug.Hexdump2(data)))
+		ret = new(dns.Msg)
+		err = ret.Unpack(data)
 		if err != nil {
 			pc.c.Close() // not giving it back
 			if err == io.EOF && cached {
