@@ -32,7 +32,7 @@ func Hexdump(m *dns.Msg, v ...interface{}) {
 		return
 	}
 
-	out := "\n" + string(hexdump(buf))
+	out := "\n" + string(Hexdump2(buf))
 	v = append(v, out)
 	log.Debug(v...)
 }
@@ -49,11 +49,11 @@ func Hexdumpf(m *dns.Msg, format string, v ...interface{}) {
 	}
 
 	format += "\n%s"
-	v = append(v, hexdump(buf))
+	v = append(v, Hexdump2(buf))
 	log.Debugf(format, v...)
 }
 
-func hexdump(data []byte) []byte {
+func Hexdump2(data []byte) []byte {
 	b := new(bytes.Buffer)
 
 	newline := ""
