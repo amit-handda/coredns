@@ -96,6 +96,7 @@ func (f *Forward) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	deadline := time.Now().Add(defaultTimeout)
 	start := time.Now()
 	for time.Now().Before(deadline) {
+		log.Debug("before deadline")
 		if i >= len(list) {
 			// reached the end of list, reset to begin
 			i = 0
@@ -129,36 +130,46 @@ func (f *Forward) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 		opts := f.opts
 		for {
 			ret, err = proxy.Connect(ctx, state, opts)
+			log.Debugf("hello %v\n", err )
 			if err == ErrCachedClosed { // Remote side closed conn, can only happen with TCP.
 				continue
 			}
 			// Retry with TCP if truncated and prefer_udp configured.
 			if ret != nil && ret.Truncated && !opts.forceTCP && opts.preferUDP {
 				opts.forceTCP = true
+				log.Debug("force TCP")
 				continue
 			}
+			log.Debug("break0")
 			break
 		}
 
 		if child != nil {
+			log.Debug("child finish")
 			child.Finish()
 		}
 
 		if f.tapPlugin != nil {
+			log.Debug("dns tap")
 			toDnstap(f, proxy.addr, state, opts, ret, start)
 		}
 
 		upstreamErr = err
 
 		if err != nil {
+			log.Debug( "hain??" )
+			debug.Hexdumpf(ret, "packetwa")
+			break
 			// Kick off health check to see if *our* upstream is broken.
 			if f.maxfails != 0 {
 				proxy.Healthcheck()
 			}
 
 			if fails < len(f.proxies) {
+				log.Debug( "continue" )
 				continue
 			}
+			log.Debug( "break" )
 			break
 		}
 
@@ -177,6 +188,7 @@ func (f *Forward) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg
 	}
 
 	if upstreamErr != nil {
+		log.Debugf( "return failure %v", upstreamErr )
 		return dns.RcodeServerFailure, upstreamErr
 	}
 
